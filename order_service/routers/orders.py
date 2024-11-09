@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from .. import models, database
 
 router = APIRouter(
@@ -15,13 +16,20 @@ def get_db():
     finally:
         db.close()
 
+# Modèle Pydantic pour les données de la commande
+class OrderCreate(BaseModel):
+    client_name: str
+    departure_city: str
+    delivery_city: str
+    weight: float
+
 @router.post("/", response_model=dict)
-def create_order(client_name: str, departure_city: str, delivery_city: str, weight: float, db: Session = Depends(get_db)):
+def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     new_order = models.Order(
-        client_name=client_name,
-        departure_city=departure_city,
-        delivery_city=delivery_city,
-        weight=weight
+        client_name=order.client_name,
+        departure_city=order.departure_city,
+        delivery_city=order.delivery_city,
+        weight=order.weight
     )
     db.add(new_order)
     db.commit()
